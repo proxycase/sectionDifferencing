@@ -1,3 +1,4 @@
+import processing.net.*;
 import processing.video.*;
 
 int numPixels;
@@ -6,6 +7,7 @@ Capture video;
 int[] mvmt = new int[7];
 int[] moving = new int[7];
 int sec = 7;
+boolean sending = false;
 
 // video capture dimensions
 int vW = 64;
@@ -15,11 +17,17 @@ int vH = 48;
 int vWidth = 64;
 
 // threshold just above stable
-int thresh = 4000;
+int thresh = 5000;
+
+// network details
+Client c;
 
 void setup() {
   size(64, 48);
-  frameRate(2);
+  frameRate(10);
+  
+  c = new Client (this, "192.168.1.126", 8001);
+  c.write("heythere");
 
   // This the default video input, see the GettingStartedCapture 
   // example if it creates an error
@@ -39,6 +47,7 @@ void setup() {
 }
 
 void draw() {
+  clientRecieve();
   for (int p = 0; p < mvmt.length; p++) {
     mvmt[p] = 0;
   }
@@ -83,11 +92,13 @@ void draw() {
       if (movementSum > 0) {
         updatePixels();
         finalCheck();
-        println("total move: " + movementSum); // Print the total amount of movement to the console
-        println(" s1:" + moving[0] + " s2:" + moving[1] + " s3:" + moving[2] + " s4:" + moving[3] + " s5:" + moving[4] + " s6:" + moving[5] +" s7:" + moving[6]);
+        sendData();
+        //println("total move: " + movementSum); // Print the total amount of movement to the console
+        //println(" s1:" + moving[0] + " s2:" + moving[1] + " s3:" + moving[2] + " s4:" + moving[3] + " s5:" + moving[4] + " s6:" + moving[5] +" s7:" + moving[6]);
       }
     }
   }
+  
 }
 
 
@@ -109,12 +120,35 @@ void sectionCheck(int x_, int mv) {
   } else if (x_ > s*6+1 && x_ < s*7) {
     mvmt[6] += mv;
   } else {
-    println("out of bounds");
+    //println("out of bounds");
   }
 }
 
 void finalCheck() {
   for (int p = 0; p < mvmt.length; p++ ) {
     moving[p] = mvmt[p] > thresh ? 1 : 0;
+  }
+}
+
+void sendData() {
+
+}
+
+void clientRecieve() {
+  if (c.available() > 0) {
+    String input = c.readString();
+    println(input);
+    if (input.equals("ok!")) {
+      c.write("sensor");
+      sending = true;
+    }
+  }
+  if (sending) {
+    String mess = "";
+    for(int i = 0; i < moving.length; i++ ) {
+      mess += moving[i];
+    }
+    c.write(mess+":");
+    println(mess);
   }
 }
