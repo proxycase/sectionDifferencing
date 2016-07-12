@@ -1,0 +1,6 @@
+Written in Processing 3.0.1
+Depends on processing.video library and that's it.
+
+Compiled to Linux for uploading to a rasp Pi
+
+TODO: TCP or HTTP Get for communicating with node server internally in Rasp Pi.
