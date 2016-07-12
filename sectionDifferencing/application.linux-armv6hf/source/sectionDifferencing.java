@@ -22,17 +22,34 @@ int numPixels;
 int[] previousFrame;
 Capture video;
 int[] mvmt = new int[7];
+int[] moving = new int[7];
+int sec = 7;
+
+// video capture dimensions
+int vW = 64;
+int vH = 48;
+
+// calculated video width, divisible by 7.
+int vWidth = 64;
+
+// threshold just above stable
+int thresh = 4000;
 
 public void setup() {
   
-  
+  frameRate(2);
+
   // This the default video input, see the GettingStartedCapture 
   // example if it creates an error
-  video = new Capture(this, 128, 96);
-  
+  video = new Capture(this, vW, vH);
+
   // Start capturing the images from the camera
   video.start(); 
-  
+
+  for (int p = 0; p < mvmt.length; p++) {
+    mvmt[p] = 0;
+  }
+
   numPixels = video.width * video.height;
   // Create an array to store the previously captured frame
   previousFrame = new int[numPixels];
@@ -40,18 +57,23 @@ public void setup() {
 }
 
 public void draw() {
+  for (int p = 0; p < mvmt.length; p++) {
+    mvmt[p] = 0;
+  }
   if (video.available()) {
     // When using video to manipulate the screen, use video.available() and
     // video.read() inside the draw() method so that it's safe to draw to the screen
     video.read(); // Read the new frame from the camera
     video.loadPixels(); // Make its pixels[] array available
-    
+
     int movementSum = 0; // Amount of movement in the frame
-    for (int m = 0; m < video.width; m++) {
+    for (int m = 0; m < vWidth; m++) {
       for (int n = 0; n < video.height; n++) {
-        int i = n*video.width+m;
+        
+        int i = n*vWidth+m;
         int currColor = video.pixels[i];
         int prevColor = previousFrame[i];
+        
         // Extract the red, green, and blue components from current pixel
         int currR = (currColor >> 16) & 0xFF; // Like red(), but faster
         int currG = (currColor >> 8) & 0xFF;
@@ -65,23 +87,22 @@ public void draw() {
         int diffG = abs(currG - prevG);
         int diffB = abs(currB - prevB);
         // Add differences to the right array
-        
-        
+
         int currentMovement = diffR + diffG + diffB;
         movementSum += currentMovement;
         sectionCheck(m, currentMovement);
-      
+
         // Render the difference image to the screen
-        pixels[i] = color(diffR, diffG, diffB);
-        // The following line is much faster, but more confusing to read
-        //pixels[i] = 0xff000000 | (diffR << 16) | (diffG << 8) | diffB;
+        pixels[i] = 0xff000000 | (diffR << 16) | (diffG << 8) | diffB;
         // Save the current color into the 'previous' buffer
         previousFrame[i] = currColor;
       }
 
       if (movementSum > 0) {
         updatePixels();
-        println(movementSum); // Print the total amount of movement to the console
+        finalCheck();
+        println("total move: " + movementSum); // Print the total amount of movement to the console
+        println(" s1:" + moving[0] + " s2:" + moving[1] + " s3:" + moving[2] + " s4:" + moving[3] + " s5:" + moving[4] + " s6:" + moving[5] +" s7:" + moving[6]);
       }
     }
   }
@@ -89,10 +110,33 @@ public void draw() {
 
 
 
-public int sectionCheck(int x_, int mvmt) {
-   return 0; 
+public void sectionCheck(int x_, int mv) {
+  float s = vWidth/sec;
+  if (x_ < s) {
+    mvmt[0] += mv;
+  } else if (x_ > s+1 && x_ < s*2) {
+    mvmt[1] += mv;
+  } else if (x_ > s*2+1 && x_ < s*3) {
+    mvmt[2] += mv;
+  } else if (x_ > s*3+1 && x_ < s*4) {
+    mvmt[3] += mv;
+  } else if (x_ > s*4+1 && x_ < s*5) {
+    mvmt[4] += mv;
+  } else if (x_ > s*5+1 && x_ < s*6) {
+    mvmt[5] += mv;
+  } else if (x_ > s*6+1 && x_ < s*7) {
+    mvmt[6] += mv;
+  } else {
+    println("out of bounds");
+  }
 }
-  public void settings() {  size(128,96); }
+
+public void finalCheck() {
+  for (int p = 0; p < mvmt.length; p++ ) {
+    moving[p] = mvmt[p] > thresh ? 1 : 0;
+  }
+}
+  public void settings() {  size(64, 48); }
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "sectionDifferencing" };
     if (passedArgs != null) {

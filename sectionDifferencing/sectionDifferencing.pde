@@ -19,7 +19,7 @@ int thresh = 4000;
 
 void setup() {
   size(64, 48);
-  frameRate(5);
+  frameRate(2);
 
   // This the default video input, see the GettingStartedCapture 
   // example if it creates an error
@@ -51,9 +51,11 @@ void draw() {
     int movementSum = 0; // Amount of movement in the frame
     for (int m = 0; m < vWidth; m++) {
       for (int n = 0; n < video.height; n++) {
+        
         int i = n*vWidth+m;
         color currColor = video.pixels[i];
         color prevColor = previousFrame[i];
+        
         // Extract the red, green, and blue components from current pixel
         int currR = (currColor >> 16) & 0xFF; // Like red(), but faster
         int currG = (currColor >> 8) & 0xFF;
