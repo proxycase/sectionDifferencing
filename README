@@ -3,4 +3,8 @@ Depends on processing.video library and that's it.
 
 Compiled to Linux for uploading to a rasp Pi
 
+** HEADS UP **
+Currently this Code does not run on the RpiZero as-is.
+**************
+
 TODO: TCP or HTTP Get for communicating with node server internally in Rasp Pi.
